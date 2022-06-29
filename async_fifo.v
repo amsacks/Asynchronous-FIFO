@@ -5,7 +5,8 @@
                   and read pointers between the clock domains.
                   
                   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO1.pdf
-                
+                  
+                  This module is parametrized to allow for a semi-flexible buffer size.
 */
 
 module async_fifo
