@@ -1,7 +1,17 @@
+/* Description:   An asynchronous FIFO that allows the buffering of data between
+                  two clock domains. The empty and full status flags are asserted
+                  immediately, but are removed pessimistically (i.e. 2 clock cycles late)
+                  due to the latency of using double Flip-Flops to synchronize the write
+                  and read pointers between the clock domains.
+                  
+                  http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO1.pdf
+                
+*/
+
 module async_fifo
     #(  parameter WIDTH        = 4,
-        parameter DEPTH        = 16,        // Must be a power of 2
-        parameter ALMOST_FULL  = 8,
+        parameter DEPTH        = 16,        // NOTE: Must be a power of 2
+        parameter ALMOST_FULL  = 8,         
         parameter ALMOST_EMPTY = 8 )
     (   input              w_clk,
         input              w_rst,
