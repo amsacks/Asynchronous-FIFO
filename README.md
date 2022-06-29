@@ -14,6 +14,7 @@ _FIFO parameters for testbench:_
   
 The image confirms the following:  
   - Immediately at 8 and 16 write clock cycles, the almost full and full flags are set HIGH, respectively. 
-  - After a delay of 2-3 read clock cycles, the empty/almost empty flags are set LOW. 
+  - After a delay of 2-3 read clock cycles, the empty flag is set LOW and the almost empty flag is set HIGH. 
   
+---  
 **Test Case #2**: Only read from FIFO; try reading when FIFO is empty. Check that the empty/almost empty status flags are asserted immediately, and full/almost full flags are removed pessimesstically.    
