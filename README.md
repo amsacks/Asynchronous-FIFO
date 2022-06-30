@@ -29,6 +29,7 @@ The image shows the following:
   - The almost full flag is deasserted after a delay.
   - The empty flag is asserted immediately at the 16th posedge of the read clock.
   - The FIFO was never overwritten in Test Case #1, since the last word in the FIFO is 22. 
-
-
+  
+---  
+# Resources Used
 
