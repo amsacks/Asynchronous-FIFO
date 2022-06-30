@@ -2,18 +2,18 @@
 
 An asynchronous FIFO buffer that allows for N entries, with empty/almost empty and full/almost full output status flags. Design heavily based off Clifford E. Cummings' work: http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO1.pdf  
   
----    
+   
 # Resources Used  
   
   
----  
+
 # Testbench  
 _FIFO parameters for testbench:_
   1. Depth is 16
   2. Data Width is 5 bits
   3. Almost Full is 8 
   4. Almost Empty is 8  
-  
+---  
   The following test cases show that the FIFO buffer never gets overflowed or underflowed and confirms that the status flags are asserted immediately, but removed after a delay of 2-3 clock cycles.  
   
 
