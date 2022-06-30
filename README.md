@@ -6,7 +6,7 @@ An asynchronous FIFO buffer that allows for N entries, with empty/almost empty a
 # Resources Used  
   
   
-  
+---  
 # Testbench  
 _FIFO parameters for testbench:_
   1. Depth is 16
