@@ -2,6 +2,11 @@
 
 An asynchronous FIFO buffer that allows for N entries, with empty/almost empty and full/almost full output status flags. Design heavily based off Clifford E. Cummings' work: http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO1.pdf  
   
+---    
+# Resources Used  
+  
+  
+  
 # Testbench  
 _FIFO parameters for testbench:_
   1. Depth is 16
@@ -30,6 +35,5 @@ The image shows the following:
   - The empty flag is asserted immediately at the 16th posedge of the read clock.
   - The FIFO was never overwritten in Test Case #1, since the last word in the FIFO is 22. 
   
----  
-# Resources Used
+
 
