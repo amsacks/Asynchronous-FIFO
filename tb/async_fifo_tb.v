@@ -1,7 +1,9 @@
-module async_fifo_tb
+`timescale 1ns / 1ps
+
+module async_fifo_tbv2
     #(  parameter WIDTH   = 5,
         parameter DEPTH   = 16,   
-        parameter T_READ  = 40, // in ns
+        parameter T_READ  = 20, // in ns
         parameter T_WRITE = 10 
      );
      
@@ -39,7 +41,7 @@ module async_fifo_tb
         begin
             w_en   = 0;
             r_en   = 0;
-            in     = {(WIDTH){1'b0}};
+            in     = 0;
             w_clk  = 0;
             r_clk  = 0;
             rst    = 1;
@@ -88,15 +90,13 @@ module async_fifo_tb
             
             // Write to FIFO until full
             // Purposely Overfill. 
-            w_en = 1;
+            @(posedge r_clk) w_en = 1; 
             for(i = 0; i < DEPTH+5; i = i + 1)
                 begin
-                    @(posedge w_clk) 
-                    in = i+7;  
+                    @(posedge w_clk) in = i+7;  
                 end 
-            
-            w_en = 0; 
-            @(posedge w_clk);
+                 
+            @(posedge w_clk) w_en = 0; 
             #(T_READ/2);
             r_en = 1; 
             
