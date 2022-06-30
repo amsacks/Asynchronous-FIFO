@@ -9,7 +9,7 @@ _FIFO parameters for testbench:_
   3. Almost Full is 8 
   4. Almost Empty is 8  
   
-  The following test cases shows that the FIFO buffer never gets overflowed or underflowed and confirms that the status flags are asserted immediately, but removed after a delay of 2-3 clock cycles.  
+  The following test cases show that the FIFO buffer never gets overflowed or underflowed and confirms that the status flags are asserted immediately, but removed after a delay of 2-3 clock cycles.  
   
 ---  
 **Test Case #1**: Only write to FIFO; try writing when FIFO is full. Check that the full/almost status flags are asserted immediately, and empty/almost empty flags are removed pessimesstically (delayed by the synchronizing of the write pointer to the read clock domain).   
