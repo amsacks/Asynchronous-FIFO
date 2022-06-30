@@ -13,10 +13,20 @@ _FIFO parameters for testbench:_
 **Test Case #1**: Only write to FIFO; try writing when FIFO is full. Check that the full/almost status flags are asserted immediately, and empty/almost empty flags are removed pessimesstically (delayed by the synchronizing of the write pointer to the read clock domain).   
 ![image](https://github.com/amsacks/Asynchronous-FIFO/blob/main/tb/async_fifo_tb_case1.png)  
   
-The image confirms the following:  
+The image shows the following: 
   - Immediately at 8 and 16 write clock cycles, the almost full and full flags are set HIGH, respectively. 
   - After a delay of 2-3 read clock cycles, the empty flag is set LOW and the almost empty flag is set HIGH. 
   
 ---  
 **Test Case #2**: Only read from FIFO; try reading when FIFO is empty. Check that the empty/almost empty status flags are asserted immediately, and full/almost full flags are removed pessimesstically.    
 ![image](https://github.com/amsacks/Asynchronous-FIFO/blob/main/tb/async_fifo_tb_case2.png)  
+  
+The image shows the following:
+  - After the first read clock cycle, the full flag is deasserted after a 2 write clock cycle delay.
+  - The almost empty flag is deasserted after 2 read clock cycles after 8 reads have taken place (this is expected because of the synchronizing latency).
+  - The almost full flag is deasserted after a delay.
+  - The empty flag is asserted immediately at the 16th posedge of the read clock.
+  - The FIFO was never overwritten in Test Case #1, since the last word in the FIFO is 22. 
+
+
+
