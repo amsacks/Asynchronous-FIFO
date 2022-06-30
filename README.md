@@ -4,6 +4,7 @@ An asynchronous FIFO buffer that allows for N entries, with empty/almost empty a
   
    
 # Resources Used  
+Depth: 16  
 ![image](https://user-images.githubusercontent.com/98288814/176570370-3de5664f-ff2b-4e86-9708-26d5ce8e8968.png)  
   
 # Testbench  
