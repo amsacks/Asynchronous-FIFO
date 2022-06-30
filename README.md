@@ -19,3 +19,4 @@ The image confirms the following:
   
 ---  
 **Test Case #2**: Only read from FIFO; try reading when FIFO is empty. Check that the empty/almost empty status flags are asserted immediately, and full/almost full flags are removed pessimesstically.    
+![image](https://github.com/amsacks/Asynchronous-FIFO/blob/main/tb/async_fifo_tb_case2.png)  
