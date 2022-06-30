@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 /* Description:   An asynchronous FIFO that allows the buffering of data between
                   two clock domains. The empty and full status flags are asserted
                   immediately, but are removed pessimistically (i.e. 2 clock cycles late)
