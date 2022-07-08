@@ -36,5 +36,5 @@ The image shows the following:
   - The FIFO was never overwritten in Test Case #1, since the last word in the FIFO is 22. 
   
 
-**Test Case #2**: Reading and writing to FIFO.  
+**Test Case #3**: Reading and writing to FIFO.  
   ![image](https://github.com/amsacks/Asynchronous-FIFO/blob/main/tb/async_fifo_tb_case3.png)  
