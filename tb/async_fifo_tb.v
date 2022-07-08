@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module async_fifo_tbv2
+module async_fifo_tb
     #(  parameter WIDTH   = 5,
         parameter DEPTH   = 16,   
         parameter T_READ  = 20, // in ns
@@ -106,6 +106,17 @@ module async_fifo_tbv2
                 begin
                     @(posedge r_clk)
                     ;               
-                end  
+                end
+                
+            @(posedge w_clk) w_en = 1;
+            #(T_WRITE/2);
+             
+            // Read and Write to FIFO.    
+            for(i = 0; i < DEPTH+10; i = i + 1)
+                begin
+                    @(posedge w_clk) in = (i ^ 7) + 7;
+                end     
+            $finish(); 
+                 
         end // test bench 
 endmodule   // async_fifo_tb.v
