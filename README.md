@@ -13,6 +13,8 @@ _FIFO parameters for testbench:_
   2. Data Width is 5 bits
   3. Almost Full is 8 
   4. Almost Empty is 8  
+  5. Read Clock 50 MHz 
+  6. Write Clock 100 MHz
 ---  
   The following test cases show that the FIFO buffer never gets overflowed or underflowed and confirms that the status flags are asserted immediately, but removed after a delay of 2-3 clock cycles.  
   
