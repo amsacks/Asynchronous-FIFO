@@ -1,22 +1,25 @@
 `timescale 1ns / 1ps
-/* Description:   An asynchronous FIFO that allows the buffering of data between
-                  two clock domains. The empty and full status flags are asserted
-                  immediately, but are removed pessimistically (i.e. 2 clock cycles late)
-                  due to the latency of using double FFs to synchronize the write
-                  and read pointers between the clock domains.
-                  
-                  This module is parametrized to allow for a semi-flexible buffer size, requiring 
-                  only the DEPTH be a power of 2.
-                  
-                  Formally verified.
-*/
+/* 
+ *  
+ *  An asynchronous FIFO that allows the buffering of data between
+ *  two clock domains. The empty and full status flags are asserted
+ *  immediately, but are removed pessimistically (i.e. 2 clock cycles late)
+ *  due to the latency of using double FFs to synchronize the write
+ *  and read pointers between the clock domains.
+ *                                  
+ *  Formally verified.
+ *
+ *  NOTE:
+ *  - AW must be greater than 3
+ *  - Almost empty flag is asserted when FIFO level is within 4 from being empty
+ *  - Almost full flag is asserted when FIFO level is within 4 from being full
+ * 
+ */
 `default_nettype none
 
 module async_fifo
-    #(  parameter DW     = 4,
-        parameter AW     = 4,
-        parameter ALMOST_FULL  = 8,         
-        parameter ALMOST_EMPTY = 8 )
+    #(  parameter DW  = 4,
+        parameter AW  = 4 ) 
     (   input wire              w_clk,
         input wire              w_rstn,
         input wire              w_en,
@@ -31,8 +34,10 @@ module async_fifo
         output reg              r_almost_empty, 
         output reg              r_empty
     );
-
-   
+    
+    // Almost full parameter, 4 less than full
+    localparam AF = (1 << AW) - 4;
+  
     // Write domain logic
     wire [AW - 1 : 0] waddr;              // write address in memory 
     wire [AW     : 0] wgraynext;          
@@ -85,7 +90,7 @@ module async_fifo
     always @(posedge r_clk or negedge r_rstn)
         begin
             if(!r_rstn) {rq2_wptr, rq1_wptr} <= 0;
-            else      {rq2_wptr, rq1_wptr} <= {rq1_wptr, wptr}; 
+            else        {rq2_wptr, rq1_wptr} <= {rq1_wptr, wptr}; 
         end 
     
     // Register next binary and gray read pointers
@@ -97,7 +102,7 @@ module async_fifo
     
     // Read address and binary/gray read pointer logic
     assign raddr     =  rbin[AW-1:0];  
-    assign rbinnext  =  rbin + { {(AW){1'b0}}, (r_en && (!r_empty))};
+    assign rbinnext  =  rbin + { {(AW){1'b0}}, (r_en && (!r_empty)) };
     assign rgraynext = (rbinnext >> 1) ^ rbinnext; 
     
     // Logic for FIFO is empty
@@ -127,23 +132,23 @@ module async_fifo
             - There are two cases since a FIFO is a circular queue.
                 Case 1: read pointer > write pointer. 
                     
-                    Logic for difference: diff = (wptr_bin - rptr_bin) + FIFO DEPTH 
+                    Logic for difference: diff = (wptr_bin - rptr_bin)
                      
                 Case 2: read pointer <= write pointer                                             
             
                     Logic for difference: diff = (wptr_bin - rptr_bin)
                     
    */
-   assign rbin_wbin_diff     = (rbinnext > rq2_wptr_bin) ? (rq2_wptr_bin - rbinnext + (1<<AW))
+   assign rbin_wbin_diff     = (rbinnext > rq2_wptr_bin) ? (rbinnext - rq2_wptr_bin)
                                                             : (rq2_wptr_bin - rbinnext);
-   assign ralmost_empty_val  = (rbin_wbin_diff >= ALMOST_EMPTY);
+   assign ralmost_empty_val  = (rbin_wbin_diff <= 4);
     
    // 3rd: Assign to the top module output almost empty. On reset, if FIFO depth is 
    //      greater than ALMOST_EMPTY, then r_almost_empty = 1'b0.
    always @(posedge r_clk or negedge r_rstn)
        begin
-           if(!r_rstn) r_almost_empty <= 0;
-           else      r_almost_empty <= ralmost_empty_val;
+           if(!r_rstn)  r_almost_empty <= 0;
+           else         r_almost_empty <= ralmost_empty_val;
        end
        
        
@@ -169,7 +174,7 @@ module async_fifo
            
     // Use binary to address FIFO memory. Use Gray for synchronizing and logic for almost empty/empty flags   
     assign waddr     = wbin[AW-1:0];
-    assign wbinnext  = wbin + { {(AW){1'b0}}, (w_en && (!w_full))};
+    assign wbinnext  = wbin + { {(AW){1'b0}}, (w_en && (!w_full)) };
     assign wgraynext = (wbinnext >> 1) ^ wbinnext; 
     
     
@@ -177,7 +182,7 @@ module async_fifo
     always @(posedge w_clk or negedge w_rstn)
         begin
             if(!w_rstn) w_full <= 1'b0;
-            else      w_full <= wfull_val; 
+            else        w_full <= wfull_val; 
         end 
     
     assign wfull_val = (wgraynext == {~wq2_rptr[AW:AW-1], 
@@ -198,8 +203,8 @@ module async_fifo
     
     assign wbin_rbin_diff  = (wbinnext > wq2_rptr_bin) ? (wbinnext - wq2_rptr_bin) 
                                                         : (wq2_rptr_bin - wbinnext); 
-    assign walmost_full_val = (wbin_rbin_diff >= ALMOST_FULL);
-                                                    
+    assign walmost_full_val = (wbin_rbin_diff >=  AF);
+                                                  
     always @(posedge w_clk or negedge w_rstn)
        begin
            if(!w_rstn) w_almost_full <= 1'b0; 
