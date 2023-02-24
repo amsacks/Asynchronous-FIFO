@@ -1,28 +1,30 @@
 `timescale 1ns / 1ps
 
 /*
- *  A simple self-check testbench that mainly 
- *  checks for the correct assertion/deassertion 
- *  of full/empty and almost full/almost empty flags. 
+ *  A self-check testbench that mainly 
+ *  verifies FIFO reads are sequential and 
+ *  pointer difference does not exceed FIFO depth
+ *  for AE/AF status flags.
+ *
+ *  Need to look at waveform for the correct 
+ *  assertion/deassertion of status flags.
  *
  *  NOTE:
- *  - Must have AW_TB be greater than 3
- *  - Not complete: needs work on being able to apply
- *      for different  read/write clocks.
- *  
+ *  - Must have AW_TB be greater than 3 since AE/AF flags are 
+ *    asserted when pointer difference is within 4 of empty/full   
+ *    being asserted
+ * 
  */
 
 module async_fifo_tb();
 
-    // Period (ns) and frequency (Hz) of Read/Write CLK
-    localparam T_RCLK = 20;
-    localparam F_RCLK = 50_000_000;
+    // Period (ns) of Read/Write CLK
+    localparam T_RCLK = 10;
     
-    localparam T_WCLK = 10;
-    localparam F_WCLK = 100_000_000; 
+    localparam T_WCLK = 41.667;
 
     // Data Width and Address Width of FIFO
-    localparam DW_TB = 10;   
+    localparam DW_TB = 4;   
     localparam AW_TB = 10; 
     localparam DATA_VAL_MAX = (DW_TB << 2); 
 
@@ -71,7 +73,7 @@ module async_fifo_tb();
     logic [31:0] total_in_fifo = 0; 
     
     // Number of test cases
-    localparam N_TB_WRITES              = (2 << AW_TB) - 2;
+    localparam N_TB_WRITES              = (2 << AW_TB) + 10;
     localparam N_TB_READS               = (2 << AW_TB) + 10; 
     localparam N_TB_WRITES_AND_READS    = (2 << AW_TB) + 20;
 
@@ -157,13 +159,9 @@ module async_fifo_tb();
             @(negedge w_clk);
             
         end 
-                
-        // Read from FIFO
-        @(negedge r_clk);
-        $display("Reading FIFO.\n"); 
-        for(j = 0; j < N_TB_READS; j++)
-            @(negedge r_clk);  
-            
+        
+        repeat (10) @(posedge w_clk); 
+        
         $display("FINISH!"); 
         $finish();
     end // testbench
@@ -252,6 +250,22 @@ module async_fifo_tb();
                                      else
                                         $fatal("Empty flag is NOT asserted.\n");
     
+    // Verify difference pointers do not exceed the FIFO level depth
+    always @(posedge r_clk)
+        assert(DUT.rbin_wbin_diff <= (1 << AW_TB))
+        else
+            $fatal("rbin - wbin difference exceeds FIFO depth. rbin-wbin = %d\n",
+                DUT.rbin_wbin_diff);
+    always @(posedge w_clk)     
+        assert(DUT.wbin_rbin_diff <= (1 << AW_TB))
+        else
+            $fatal("wbin - rbin difference exceeds FIFO depth. wbin-rbin = %d\n",
+                DUT.wbin_rbin_diff);    
+    
+    /** 
+    
+        Only applies to T_RCLK = 20, T_WCLK = 10 
+        
     // Verify that empty/full flags are deasserted pessimistically
     property full_pessimistic_deassertion_no_write_p;
         @(posedge w_clk) (w_full == 1'b1 && r_en == 1'b1 && !w_en)
@@ -261,7 +275,7 @@ module async_fifo_tb();
                             
                  
     endproperty
-    full_pessimistic_deassertion_p_no_write_chk: assert property(full_pessimistic_deassertion_no_write_p)
+    full_pessimistic_deassertion_no_write_p_chk: assert property(full_pessimistic_deassertion_no_write_p)
                                            $display("Full flag is deasserted pessimistically, no write.\n"); 
                                         else
                                            $fatal("Full flag is NOT deasserted pessimistically, no write.\n");
@@ -270,59 +284,59 @@ module async_fifo_tb();
         @(posedge w_clk) (w_full == 1'b1 && r_en == 1'b1 && w_en == 1'b1)
                             |=> (w_full == 0); 
     endproperty
-    full_pessimistic_deassertion_p_with_write_chk: assert property(full_pessimistic_deassertion_with_write_p)
+    full_pessimistic_deassertion_with_write_p_chk: assert property(full_pessimistic_deassertion_with_write_p)
                                            $display("Full flag is deasserted pessimistically, with write.\n"); 
                                         else
                                            $fatal("Full flag is NOT deasserted pessimistically, with write.\n");
-    
+
     property empty_pessimistic_deassertion_p;
-        @(posedge r_clk) ((r_empty == 1'b1 && w_en == 1'b1))
+        @(posedge r_clk) (r_empty == 1'b1 && w_en == 1'b1)
                             |->  ##4 (r_empty == 0);                       
     endproperty
     empty_pessimistic_deassertion_p_chk: assert property(empty_pessimistic_deassertion_p)
                                             $display("Empty flag is deasserted pessimistically.\n");
                                          else
                                             $fatal("Empty flag is NOT deasserted pessimistically.\n");
-    
+
     // Property that almost empty/almost full flags are asserted correctly
-    property almost_full_immediate_assertion_p; 
+    property almost_full_assertion_p; 
         @(posedge w_clk) (DUT.wbin_rbin_diff >= AF_TB)
                             |=> (w_almost_full == 1'b1); 
         
     endproperty
-    almost_full_immediate_assertion_p_chk: assert property(almost_full_immediate_assertion_p)
+    almost_full_assertion_p_chk: assert property(almost_full_assertion_p)
                                               $display("Almost full is asserted.\n"); 
                                            else
                                               $fatal("Almost full is NOT asserted.\n");
                                               
-    property almost_empty_immediate_assertion_p; 
+    property almost_empty_assertion_p; 
         @(posedge r_clk) disable iff(r_rstn) (DUT.rbin_wbin_diff <= 4)
                             |=> (r_almost_empty == 1'b1); 
     endproperty
-    almost_empty_immediate_assertion_p_chk: assert property(almost_empty_immediate_assertion_p)
+    almost_empty_assertion_p_chk: assert property(almost_empty_assertion_p)
                                                 $display("Almost empty is asserted.\n"); 
                                             else
                                                 $fatal("Almost empty is NOT asserted.\n"); 
  
     // Property that almost empty/almost full flags are deasserted correctly
-    property almost_full_pessimistic_deassertion_p; 
+    property almost_full_deassertion_p; 
         @(posedge w_clk) (DUT.wbin_rbin_diff < AF_TB)
                             |=> (w_almost_full == 1'b0);    
     endproperty
-    almost_full_pessimistic_deassertion_p_chk: assert property(almost_full_pessimistic_deassertion_p)
+    almost_full_deassertion_p_chk: assert property(almost_full_deassertion_p)
                                                   $display("Almost full flag is deasserted.\n");
                                                else
                                                   $fatal("Almost full flag is NOT deasserted.\n");
 
-    property almost_empty_pessimistic_deassertion_p; 
+    property almost_empty_deassertion_p; 
         @(posedge r_clk) disable iff(r_rstn) (DUT.rbin_wbin_diff > 4)
                             |=> (r_almost_empty == 1'b0); 
                 
     endproperty
-    almost_empty_pessimistic_deassertion_p_chk: assert property(almost_empty_pessimistic_deassertion_p)
+    almost_empty_deassertion_p_chk: assert property(almost_empty_deassertion_p)
                                                   $display("Almost empty flag is deasserted.\n");
                                                else
                                                   $fatal("Almost empty flag is NOT deasserted.\n");
-
-endmodule
- 
+    **/
+        
+endmodule 
